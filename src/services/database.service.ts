@@ -41,4 +41,3 @@ export async function connectToDatabase() {
 
     console.log(`Successfully connected to database: ${db.databaseName}`)
 }
-
