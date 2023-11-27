@@ -9,13 +9,13 @@ export class EmailValidator {
     constructor(
         public email: string,
         public expirationDate: Date,
-        public userId: ObjectId,
+        public userId: string,
         public isUsed: boolean,
-        public _id?: ObjectId
+        public _id: string
     ) {}
 }
 
-export function emailValidatorFactory(email: string, userId: ObjectId) {
+export function emailValidatorFactory(email: string, userId: string) {
     return new EmailValidator(
         email,
         new Date(
@@ -23,6 +23,6 @@ export function emailValidatorFactory(email: string, userId: ObjectId) {
         ),
         userId,
         false,
-        new ObjectId()
+        String(new ObjectId())
     )
 }

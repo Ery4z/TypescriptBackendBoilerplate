@@ -21,7 +21,7 @@ export async function connectToDatabase() {
     const passwordRecoveriesCollection: Collection = db.collection(process.env.PASSWORD_RECOVERIES_COLLECTION_NAME || "passwordRecoveries");
 
     // Use factory to create the database service
-    databaseServiceUser = createDatabaseServiceUser({
+    databaseServiceUser = await createDatabaseServiceUser({
         databaseType: "MongoDB",
         collections: {
             users: usersCollection,

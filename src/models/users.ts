@@ -22,35 +22,27 @@ export class User {
         public city: string,
         public phone: string,
         public isAdmin: boolean,
-        public friends: ObjectId[],
-        public projects: ObjectId[],
+        public friends: string[],
+        public projects: string[],
 
-        public _id?: ObjectId
+        public _id: string
     ) {}
 }
 
-export function createDummyUser() {
-    return new User(
-        "dupond@gmail.com",
-        "dupond",
-        "passw0rddd",
-        "saltexample",
-        "avatarurl.com",
-        "stripeIdPlanExample",
-        "stripeSubscriptionIdExemple",
-        "created",
-        new Date(),
-        new Date(),
-        "michel",
-        "dupond",
-        "FR",
-        "1 avenue de la république",
-        "Paris",
-        "+33102030405",
-        false,
-        [],
-        []
-    )
+export function createDefaultAccount(user: User ){
+    return {
+                ...user,
+                _id: String(new ObjectId()),
+                status: "created",
+                avatarURL: "",
+                planId: "",
+                stripeSubscriptionId: "",
+                createDate: new Date(),
+                lastActivityDate: new Date(),
+                isAdmin: false,
+                friends: [],
+                projects: [],
+            } as User
 }
 
 /**

@@ -1,6 +1,7 @@
 import express from "express"
-import { connectToDatabase } from "./services/database.service"
+import { connectToDatabase } from "./services/database.service.new"
 import { usersRouter } from "./routes/users.router"
+import { usersRouterNew } from "./routes/users.new.router"
 import { Application } from "express"
 import path from "path"
 
@@ -18,7 +19,8 @@ app.get("/", async (_req, res) => {
     res.status(200).send("Hello World!")
 })
 
-app.use("/users", usersRouter)
+//app.use("/users", usersRouter)
+app.use("/users",usersRouterNew)
 
 connectToDatabase()
     .then(() => {

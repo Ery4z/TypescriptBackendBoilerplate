@@ -19,10 +19,10 @@ export const userNewPasswordSchema = [
 ]
 
 export const loginSchema = [
-    body("userId").isString().isLength({ min: 1 }),
+    body("email").isEmail().isLength({ min: 1 }),
     body("password").isString().isLength({ min: 1 }),
     body().custom((bodyContent) => {
-        const allowedKeys = ["userId", "password"]
+        const allowedKeys = ["email", "password"]
         const bodyKeys = Object.keys(bodyContent)
 
         // If there are any keys in bodyContent that aren't in allowedKeys, throw an error
