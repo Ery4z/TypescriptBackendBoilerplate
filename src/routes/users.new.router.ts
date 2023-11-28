@@ -80,7 +80,7 @@ usersRouterNew.get(
         }
     }
 )
-//TODO: Port this
+//TODO: verify the port
 
 usersRouterNew.get(
     "/recoverpasswordrequest/:email",
@@ -93,39 +93,46 @@ usersRouterNew.get(
         }
 
         try {
-            const query = { email: email }
-            if (
-                collections &&
-                collections.users &&
-                collections.passwordRecoveries
-            ) {
-                const user = (await collections.users.findOne(
-                    query
-                )) as unknown as User
 
-                if (user) {
-                    // Generate a recovery password object and store it in the database
-                    const passwordRecovery = passwordRecoveryFactory(user._id!)
+            let user
+            try {
+                user = await databaseServiceUser.getUserByEmail(email)
+            } catch {
+                res.status(500).send(
+                    `Error accessing to the user database`
+                )
+                return
+            }
 
-                    await collections.passwordRecoveries.insertOne(
-                        passwordRecovery
-                    )
-
-                    //! Todo Create a route
-                    // Send the recovery link to the user by email
-                    let email_response = await sendPasswordRecoveryEmail(
-                        user.email,
-                        `${process.env.APP_URL}/users/recoverpassword/` +
-                            passwordRecovery._id!.toString()
-                    )
-                }
-
+            // Do not inform the client if the email do not exist
+            if (!user) {
                 res.status(200).send(
                     "An email has been sent to the email address if it exists in our database"
                 )
-            } else {
-                res.status(500).send("Database connection error")
+                return
             }
+
+            const passwordRecovery = passwordRecoveryFactory(user._id)
+            
+
+            try{
+                databaseServiceUser.insertPasswordRecovery(passwordRecovery)
+            } catch (error) {
+                res.status(500).send(
+                    `Error accessing to the password recovery database`
+                )
+                return
+            }
+
+
+            await sendPasswordRecoveryEmail(user.email,
+                `${process.env.APP_URL}/users/recoverpassword/` +
+                    passwordRecovery._id!.toString())
+
+            res.status(200).send(
+                "An email has been sent to the email address if it exists in our database"
+            )
+
         } catch (error) {
             res.status(500).send(
                 "An error occured while trying to recover the password"
@@ -141,89 +148,95 @@ usersRouterNew.get("/recoverpassword/:id", async (req: Request, res: Response) =
         url: `${process.env.APP_URL}/users/recoverpassword/` + id,
     })
 })
-//TODO: Port this
+//TODO: Verify the port
 
 usersRouterNew.post(
     "/recoverpassword/:id",
     bodyJSONValidate(recoverPasswordSchema),
     async (req: Request, res: Response) => {
         const id = req?.params?.id
-        try {
-            const query = { _id: new ObjectId(id) }
-            if (
-                collections &&
-                collections.passwordRecoveries &&
-                collections.users
-            ) {
-                const passwordRecovery =
-                    (await collections.passwordRecoveries.findOne(
-                        query
-                    )) as unknown as PasswordRecovery
 
-                if (!passwordRecovery) {
-                    res.status(404).send("Password recovery link not found")
-                    return
-                }
-
-                // Verify the expiration date or already used
-                if (
-                    passwordRecovery.expirationDate < new Date() ||
-                    passwordRecovery.isUsed
-                ) {
-                    res.status(401).send(
-                        "This link has expired or has been already used"
-                    )
-                    return
-                }
-
-                // Get the user associated with the password recovery link
-                const userQuery = { _id: passwordRecovery.userId }
-                const user = (await collections.users.findOne(
-                    userQuery
-                )) as unknown as User
-
-                if (!user) {
-                    res.status(404).send("User not found")
-                    return
-                }
-
-                // Update the user password
-
-                const userEdit = {
-                    password: await hashWithSalt(req.body.newPassword),
-                }
-
-                const result = await collections.users.updateOne(userQuery, {
-                    $set: userEdit,
-                })
-
-                if (result.modifiedCount == 1) {
-                    // Set the password recovery link as used
-                    const passwordRecoveryEdit = {
-                        isUsed: true,
-                    }
-
-                    await collections.passwordRecoveries.updateOne(query, {
-                        $set: passwordRecoveryEdit,
-                    })
-
-                    res.status(200).send(
-                        `Successfully updated user with id ${id}`
-                    )
-                    return
-                }
-
-                res.status(500).send(
-                    `User with id: ${id} not updated - User not found or duplicated in database`
-                )
-
-                return
-            }
+        let passwordRecovery;
+        try{
+            passwordRecovery = await databaseServiceUser.getPasswordRecoveryById(id)
         } catch (error) {
-            res.status(404).send(
-                `Unable to find matching document with id: ${req.params.id}`
+            res.status(500).send(
+                `Error accessing to the password recovery database`
             )
+            return
         }
+        if (!passwordRecovery) {
+            res.status(404).send("Password recovery link not found")
+            return
+        }
+
+        // Verify the expiration date or already used
+        if (
+            passwordRecovery.expirationDate < new Date() ||
+            passwordRecovery.isUsed
+        ) {
+            res.status(401).send(
+                "This link has expired or has been already used"
+            )
+            return
+        }
+
+        // Get user associated
+        let user;
+        try {
+            user = await databaseServiceUser.getUserById(passwordRecovery.userId)
+        } catch (error) {
+            res.status(500).send(
+                `Error accessing to the user database`
+            )
+            return
+            
+        }
+
+        if (!user) {
+            res.status(404).send("User not found")
+            return
+        }
+
+        // Update the user password
+
+        const userEdit = {
+            password: await hashWithSalt(req.body.newPassword),
+        }
+        let isUpdated
+        try {
+            isUpdated = await databaseServiceUser.updateUser(passwordRecovery.userId,userEdit)
+        } catch {
+            res.status(500).send(
+                `Error accessing to the user database`
+            )
+            return
+        }
+
+        if (!isUpdated){
+            res.status(500).send(
+                `User with id: ${id} not updated - User not found or duplicated in database`
+            )
+            return
+        }
+
+        const passwordRecoveryEdit = {
+            isUsed: true,
+        }
+
+        try{
+            isUpdated = await databaseServiceUser.updatePasswordRecovery(passwordRecovery._id,passwordRecoveryEdit)
+        } catch (error) {
+            res.status(500).send(
+                `Error accessing to the password recovery database`
+            )
+            return
+        }
+
+        res.status(200).send(
+            `Successfully updated user with id ${id}`
+        )
+
     }
 )
 //TODO: Verify this port 

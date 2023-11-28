@@ -1,6 +1,5 @@
 import express from "express"
 import { connectToDatabase } from "./services/database.service.new"
-import { usersRouter } from "./routes/users.router"
 import { usersRouterNew } from "./routes/users.new.router"
 import { Application } from "express"
 import path from "path"

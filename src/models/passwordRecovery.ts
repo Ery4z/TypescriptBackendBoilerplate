@@ -10,7 +10,7 @@ export class PasswordRecovery {
         public expirationDate: Date,
         public userId: string,
         public isUsed: boolean,
-        public _id?: string
+        public _id: string
     ) {}
 }
 
