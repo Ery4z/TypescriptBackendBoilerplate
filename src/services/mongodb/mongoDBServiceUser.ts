@@ -40,6 +40,15 @@ class MongoDBUserService implements IDatabaseServiceUser {
         return result.modifiedCount === 1;
     }
 
+    async deleteUser(id: string): Promise<boolean> {
+        const result = await this.usersCollection.updateOne({ _id: new ObjectId(id) }, { $set: {status: "deleted"} });
+        return result.modifiedCount === 1;
+    }
+
+    async getAllUsers(): Promise<(User | null)[]>{
+        return (await this.usersCollection.find({}).toArray()).map(e => loadUserFromMongo(e));
+    }
+
     async insertPasswordRecovery(passwordRecovery: PasswordRecovery): Promise<string> {
         const result = await this.passwordRecoveriesCollection.insertOne(dumpPasswordRecoveryToMongo(passwordRecovery));
         return String(result.insertedId);

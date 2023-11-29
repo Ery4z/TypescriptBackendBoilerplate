@@ -104,6 +104,7 @@ function AuthenticateCorrespondingId(
         }
     } catch (error) {
         res.status(401).send("Unauthorized6")
+        console.log(error)
         return
     }
 

@@ -49,7 +49,6 @@ dotenv.config()
 const PASSWORD_RECOVERY_FRONTEND_HANDLED =
     process.env.PASSWORD_RECOVERY_FRONTEND_HANDLED == "true" ? true : false
 
-//TODO: Port this
 /**
  * Route to get user information by id
  * @require User JWT token
@@ -63,16 +62,23 @@ usersRouterNew.get(
         // TODO: Review the information returned to the user
 
         try {
-            const query = { _id: new ObjectId(id) }
-            if (collections && collections.users) {
-                const user = (await collections.users.findOne(
-                    query
-                )) as unknown as User
-
-                if (user) {
-                    res.status(200).send(user)
-                }
+            let user
+            try{
+                user = await databaseServiceUser.getUserById(id)
+            } catch (error) {
+                console.error(error)
+                res.status(500).send((error as Error).message)
+                return
             }
+
+            if (user){
+                res.status(200).send(user)
+                return
+            }
+            res.status(404).send("User not found")
+            return
+
+            
         } catch (error) {
             res.status(404).send(
                 `Unable to find matching document with id: ${req.params.id}`
@@ -80,7 +86,6 @@ usersRouterNew.get(
         }
     }
 )
-//TODO: verify the port
 
 usersRouterNew.get(
     "/recoverpasswordrequest/:email",
@@ -140,7 +145,6 @@ usersRouterNew.get(
         }
     }
 )
-//TODO: Port this
 
 usersRouterNew.get("/recoverpassword/:id", async (req: Request, res: Response) => {
     const id = req?.params?.id
@@ -148,7 +152,6 @@ usersRouterNew.get("/recoverpassword/:id", async (req: Request, res: Response) =
         url: `${process.env.APP_URL}/users/recoverpassword/` + id,
     })
 })
-//TODO: Verify the port
 
 usersRouterNew.post(
     "/recoverpassword/:id",
@@ -239,7 +242,6 @@ usersRouterNew.post(
 
     }
 )
-//TODO: Verify this port 
 
 usersRouterNew.get("/validate/:id", async (req: Request, res: Response) => {
     const id = req?.params?.id
@@ -357,6 +359,7 @@ usersRouterNew.post(
             } catch (error) {
                 console.error(error)
                 res.status(500).send((error as Error).message)
+                return
             }
 
 
@@ -370,6 +373,7 @@ usersRouterNew.post(
             } catch (error) {
                 console.error(error)
                 res.status(500).send((error as Error).message)
+                return
             }
 
             // generate a link to send to the user to confirm his email address
@@ -383,6 +387,7 @@ usersRouterNew.post(
             } catch (error) {
                 console.error(error)
                 res.status(500).send((error as Error).message)
+                return
             }
 
 
@@ -397,8 +402,10 @@ usersRouterNew.post(
                 res.status(200).send(
                     `Successfully created a new user with id ${newUser._id}`
                 )
+                return
             } else {
                 res.status(500).send("Failed to send validation email.")
+                return
             }
 
 
@@ -448,7 +455,6 @@ usersRouterNew.post(
         }
     }
 )
-//TODO: Port this
 
 usersRouterNew.post(
     "/updatepassword/:id",
@@ -459,47 +465,56 @@ usersRouterNew.post(
 
         try {
             // Get the stored password
-
-            const query = { _id: new ObjectId(id) }
-            if (collections && collections.users) {
-                const user = (await collections.users.findOne(
-                    query
-                )) as unknown as User
-
-                if (user) {
-                    // Compare the stored password with the previous password
-                    var isPreviousPassOk = await compareHash(
-                        req.body.previousPassword,
-                        user.password
-                    )
-
-                    if (!isPreviousPassOk) {
-                        res.status(401).send("Unauthorized")
-                        return
-                    }
-
-                    const userEdit = {
-                        password: await hashWithSalt(req.body.newPassword),
-                    }
-
-                    const result = await collections.users.updateOne(query, {
-                        $set: userEdit,
-                    })
-
-                    if (result.modifiedCount == 1) {
-                        res.status(200).send(
-                            `Successfully updated user with id ${id}`
-                        )
-                    } else {
-                        res.status(500).send(
-                            `User with id: ${id} not updated - User not found or duplicated in database`
-                        )
-                    }
-                    return
-                }
-            } else {
-                res.status(500).send("User database server error")
+            let user;
+            try {
+                user = await databaseServiceUser.getUserById(id)
+            } catch (error) {
+                console.error(error)
+                res.status(500).send((error as Error).message)
+                return
             }
+
+            if (!user){
+                res.status(404).send("User not foudn in the database")
+                return
+            }
+
+            // Comparison of the passwords
+
+            var isPreviousPassOk = await compareHash(
+                req.body.previousPassword,
+                user.password
+            )
+
+            if (!isPreviousPassOk) {
+                res.status(401).send("Unauthorized")
+                return
+            }
+
+            const userEdit = {
+                password: await hashWithSalt(req.body.newPassword),
+            }
+
+            let isSuccess
+            try{
+                isSuccess = await databaseServiceUser.updateUser(id,userEdit)
+            } catch (error) {
+                console.error(error)
+                res.status(500).send((error as Error).message)
+                return
+            }
+
+
+            if (isSuccess) {
+                res.status(200).send(
+                    `Successfully updated user with id ${id}`
+                )
+            } else {
+                res.status(500).send(
+                    `User with id: ${id} not updated - User not found or duplicated in database`
+                )
+            }
+
         } catch (error) {
             console.error((error as Error).message)
             res.status(400).send((error as Error).message)
@@ -508,7 +523,6 @@ usersRouterNew.post(
 )
 
 // PUT
-//TODO: Port this
 
 usersRouterNew.put(
     "/:id",
@@ -519,61 +533,66 @@ usersRouterNew.put(
 
         try {
             const userEdit: UserPublicEdit = req.body as UserPublicEdit
-            const query = { _id: new ObjectId(id) }
-            if (collections && collections.users) {
-                const result = await collections.users.updateOne(query, {
-                    $set: userEdit,
-                })
 
-                result
-                    ? res
-                          .status(200)
-                          .send(`Successfully updated user with id ${id}`)
-                    : res.status(304).send(`User with id: ${id} not updated`)
+            let isSuccess
+            try{
+                isSuccess = await databaseServiceUser.updateUser(id,userEdit)
+            } catch (error) {
+                console.error(error)
+                res.status(500).send((error as Error).message)
+                return
             }
+
+            isSuccess ? res.status(200).send(`Successfully updated user with id ${id}`)
+                    : res.status(304).send(`User with id: ${id} not updated`)
+            
         } catch (error) {
             console.error((error as Error).message)
             res.status(400).send((error as Error).message)
         }
     }
 )
-//TODO: Port this
 
 // DELETE
-usersRouterNew.delete("/:id", async (req: Request, res: Response) => {
+usersRouterNew.delete("/:id",AuthenticateCorrespondingId, async (req: Request, res: Response) => {
     const id = req?.params?.id
 
     try {
-        const query = { _id: new ObjectId(id) }
-        if (collections && collections.users) {
-            const result = await collections.users.updateOne(query, {
-                $set: { status: "deleted" },
-            })
-
-            result
-                ? res
-                      .status(200)
-                      .send(`Successfully deleted user with id ${id}`)
-                : res.status(304).send(`User with id: ${id} not deleted`)
+        let isSuccess
+        try{
+            isSuccess = await databaseServiceUser.deleteUser(id)
+        } catch (error) {
+            console.error(error)
+            res.status(500).send((error as Error).message)
+            return
         }
+
+        isSuccess ? res.status(200).send(`Successfully deleted user with id ${id}`)
+                : res.status(304).send(`User with id: ${id} not deleted`)
+
     } catch (error) {
         console.error((error as Error).message)
         res.status(400).send((error as Error).message)
     }
 })
-//TODO: Port this
 
 usersRouterNew.get(
     "/",
     AuthenticateAdmin,
     async (_req: Request, res: Response) => {
         try {
-            if (collections && collections.users) {
-                const users = (await collections.users
-                    .find({})
-                    .toArray()) as unknown as User[]
-                res.status(200).send(users)
+            let userList
+            try {
+                userList = await databaseServiceUser.getAllUsers()
+            } catch (error) {
+                console.error(error)
+                res.status(500).send((error as Error).message)
+                return
             }
+
+            
+            res.status(200).send(userList)
+            
         } catch (error) {
             res.status(500).send((error as Error).message)
         }

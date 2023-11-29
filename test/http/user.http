@@ -2,8 +2,8 @@ POST http://localhost:3000/users/login
 content-type: application/json
 
 {
-    "email": "lateamlad+31@gmail.com", 
-    "password": "SecurePassword123!"
+    "email": "lateamlad+32@gmail.com", 
+    "password": "Password12"
 }
 
 ###
@@ -20,5 +20,21 @@ content-type: application/json
     "address": "1234 Main St",
     "city": "Anytown",
     "phone": "123-456-7890",
-    "email": "lateamlad+31@gmail.com"
+    "email": "lateamlad+32@gmail.com"
 }
+
+###
+
+GET http://localhost:3000/users/recoverpasswordrequest/lateamlad%2B32%40gmail.com
+
+
+###
+
+GET http://localhost:3000/users/
+content-type: application/json
+Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTY3MWI5NWZmZmM2NGM3YWY3YzkyOTUiLCJuYW1lIjoiam9obl9kb2UiLCJhZG0iOnRydWUsImlhdCI6MTcwMTI1NzkyMiwiZXhwIjoxNzMyNzkzOTIyfQ.Qv6y7Qqmcckg7kjOnLfDsj-99hjcIN-LabqvD-A3Qe4"
+
+###
+GET http://localhost:3000/users/65671b95fffc64c7af7c9295
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTY3MWI5NWZmZmM2NGM3YWY3YzkyOTUiLCJuYW1lIjoiam9obl9kb2UiLCJhZG0iOnRydWUsImlhdCI6MTcwMTI1NzkyMiwiZXhwIjoxNzMyNzkzOTIyfQ.Qv6y7Qqmcckg7kjOnLfDsj-99hjcIN-LabqvD-A3Qe4

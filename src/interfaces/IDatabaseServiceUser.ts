@@ -7,6 +7,8 @@ interface IDatabaseServiceUser {
     getUserByEmail(email: string): Promise<User | null>;
     insertUser(user: User): Promise<string>;
     updateUser(id: string, update: Partial<User>): Promise<boolean>;
+    deleteUser(id:string): Promise<boolean>;
+    getAllUsers(): Promise<(User | null)[]>;
     insertPasswordRecovery(passwordRecovery: PasswordRecovery): Promise<string>;
     getPasswordRecoveryById(id: string): Promise<PasswordRecovery | null>;
     updatePasswordRecovery(id: string, update: Partial<PasswordRecovery>): Promise<boolean>;
