@@ -22,9 +22,6 @@ export class User {
         public city: string,
         public phone: string,
         public isAdmin: boolean,
-        public friends: string[],
-        public projects: string[],
-
         public _id: string
     ) {}
 }
@@ -40,8 +37,6 @@ export function createDefaultAccount(user: User ){
                 createDate: new Date(),
                 lastActivityDate: new Date(),
                 isAdmin: false,
-                friends: [],
-                projects: [],
             } as User
 }
 

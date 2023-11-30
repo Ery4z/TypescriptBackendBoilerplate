@@ -24,8 +24,6 @@ export class UserInternalMongo {
         public city: string,
         public phone: string,
         public isAdmin: boolean,
-        public friends: ObjectId[],
-        public projects: ObjectId[],
 
         public _id: ObjectId
     ) {}
@@ -34,8 +32,6 @@ export class UserInternalMongo {
 
 export function loadUserFromMongo(userMongo: UserInternalMongo | null): User | null {
     const conversionRules = {
-        friends: convertArrayObjectIdToString,
-        projects: convertArrayObjectIdToString,
         _id: convertObjectIdToString
     };
 
@@ -44,8 +40,6 @@ export function loadUserFromMongo(userMongo: UserInternalMongo | null): User | n
 
 export function dumpUserToMongo(user: Partial<User>): UserInternalMongo {
     const conversionRules = {
-        friends: convertArrayToObjectId,
-        projects: convertArrayToObjectId,
         _id: convertToObjectId
     };
 

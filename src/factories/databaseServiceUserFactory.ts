@@ -1,20 +1,64 @@
 import IDatabaseServiceUser from "../interfaces/IDatabaseServiceUser";
 import MongoDBServiceUser from "../services/mongodb/mongoDBServiceUser";
 import * as mongoDB from "mongodb"
-import * as dotenv from "dotenv"
-import {User} from "../models/users"
-import { PasswordRecovery } from "../models/passwordRecovery";
-import { EmailValidator } from "../models/emailValidators";
+import sql, { config, pool } from 'mssql';
+import { UserInternalMongo } from "../models/users.mongo";
+import { PasswordRecoveryInternalMongo } from "../models/passwordRecovery.mongo";
+import { EmailValidatorInternalMongo } from "../models/emailValidators.mongo";
+import { MongoClient, Db, Collection } from "mongodb";
+
+import dotenv from "dotenv";
+import SQLServerServiceUser from "../services/sqlserver/SQLServerServiceUser";
 // Import other database service implementations as needed
 
 export async function createDatabaseServiceUser(config: any): Promise<IDatabaseServiceUser> {
+    dotenv.config();
+
+
+
+
     // Example configuration check
     if (config.databaseType === "MongoDB") {
         // Assuming MongoDBServiceUser is already initialized with collections
         // TODO: Add collection system
-        return new MongoDBServiceUser(config.collections.users,config.collections.passwordRecoveries,config.collections.emailValidators);
+
+        const client: MongoClient = new MongoClient(process.env.DB_CONN_STRING || "");
+        await client.connect();
+
+        const db: Db = client.db(process.env.DB_NAME);
+
+        // Initialize collections
+        const usersCollection: Collection<UserInternalMongo> = db.collection(process.env.USERS_COLLECTION_NAME || "users");
+        const emailValidatorsCollection: Collection<EmailValidatorInternalMongo> = db.collection(process.env.EMAIL_VALIDATORS_COLLECTION_NAME || "emailValidators");
+        const passwordRecoveriesCollection: Collection<PasswordRecoveryInternalMongo> = db.collection(process.env.PASSWORD_RECOVERIES_COLLECTION_NAME || "passwordRecoveries");
+
+        return new MongoDBServiceUser(usersCollection,passwordRecoveriesCollection,emailValidatorsCollection);
     }
-    // Add other database types as needed
-    // ...
+    
+    if (config.databaseType == "SQLServer") {
+        const sqlConfig: config = {
+            user: process.env.SQL_USER || "user",
+            password: process.env.SQL_PASSWORD || "password",
+            database: process.env.SQL_DATABASE || "example-db",
+            server: process.env.SQL_SERVER || "example.com",
+            port: parseInt(process.env.SQL_PORT || "1433"), // Default SQL Server port
+            options: {
+                encrypt: true, // For Azure SQL
+                trustServerCertificate: false // Change to true for local dev / self-signed certs
+            }
+        };
+        console.log(sqlConfig)
+        try {
+            const pool = new sql.ConnectionPool(sqlConfig);
+            await pool.connect()
+            console.log('Connected to SQL Server successfully.');
+
+        } catch (err) {
+            console.error('Failed to connect to SQL Server:', err);
+        }
+
+        return new SQLServerServiceUser(pool)
+
+    }
     throw new Error("Unsupported database type");
 }
