@@ -1,43 +1,20 @@
-// External Dependencies
-import * as mongoDB from "mongodb"
-import * as dotenv from "dotenv"
+import dotenv from "dotenv";
+import { createDatabaseServiceUser } from "../factories/databaseServiceUserFactory";
+import IDatabaseServiceUser from "../interfaces/IDatabaseServiceUser";
 
-// Global Variables
+export let databaseServiceUser: IDatabaseServiceUser;
 
-export const collections: {
-    users?: mongoDB.Collection
-    emailValidators?: mongoDB.Collection
-    passwordRecoveries?: mongoDB.Collection
-} = {}
-
-// Initialize Connection
+//TODO: Pass the database connection in the factory
 
 export async function connectToDatabase() {
-    dotenv.config()
+    dotenv.config();
 
-    const client: mongoDB.MongoClient = new mongoDB.MongoClient(
-        process.env.DB_CONN_STRING || ""
-    )
+    
 
-    await client.connect()
+    // Use factory to create the database service
+    databaseServiceUser = await createDatabaseServiceUser({
+        databaseType: "SQLServer"
+    });
 
-    const db: mongoDB.Db = client.db(process.env.DB_NAME)
-
-    const usersCollection: mongoDB.Collection = db.collection(
-        process.env.USERS_COLLECTION_NAME || "users"
-    )
-
-    const emailValidatorsCollection: mongoDB.Collection = db.collection(
-        process.env.EMAIL_VALIDATORS_COLLECTION_NAME || "emailValidators"
-    )
-
-    const passwordRecoveriesCollection: mongoDB.Collection = db.collection(
-        process.env.PASSWORD_RECOVERIES_COLLECTION_NAME || "passwordRecoveries"
-    )
-
-    collections.users = usersCollection
-    collections.emailValidators = emailValidatorsCollection
-    collections.passwordRecoveries = passwordRecoveriesCollection
-
-    console.log(`Successfully connected to database: ${db.databaseName}`)
+    console.log(`Successfully connected to database`);
 }

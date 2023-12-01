@@ -7,11 +7,11 @@
   "experimentalDecorators": true,
   "scripts": {
     "test": "jest",
-    "compile": "tsc && node compileFixImportExtension.js",
-    "prepare": "npm.cmd run compile",
-    "pretest": "npm.cmd run compile",
-    "dev-postcompile&run": "node compileFixImportExtension.js && node ./build/index.js",
-    "dev-server": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"npm run dev-postcompile&run\""
+    "build": "tsc && node buildFixImportExtension.js",
+    "prepare": "npm.cmd run build",
+    "pretest": "npm.cmd run build",
+    "dev-postbuild&run": "node buildFixImportExtension.js && node ./build/index.js",
+    "dev-server": "tsc-watch --noClear -p ./tsconfig.json --onSuccess \"npm run dev-postbuild&run\""
   },
   "keywords": [],
   "author": "",

@@ -47,7 +47,6 @@ export async function createDatabaseServiceUser(config: any): Promise<IDatabaseS
                 trustServerCertificate: false // Change to true for local dev / self-signed certs
             }
         };
-        console.log(sqlConfig)
         let pool;
         try {
             pool = new sql.ConnectionPool(sqlConfig);

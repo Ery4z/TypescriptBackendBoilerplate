@@ -1,8 +1,7 @@
 // External Dependencies
 import express, { Request, Response } from "express"
 import { ObjectId, Filter } from "mongodb"
-import { collections } from "../services/database.service"
-import {databaseServiceUser} from "../services/database.service.new"
+import {databaseServiceUser} from "../services/database.service"
 import { User, createDefaultAccount, UserPublicEdit } from "../models/users"
 import {
     emailValidatorFactory,
@@ -40,9 +39,9 @@ import {
 import dotenv from "dotenv"
 
 // Global Config
-export const usersRouterNew = express.Router()
+export const usersRouter = express.Router()
 
-usersRouterNew.use(express.json())
+usersRouter.use(express.json())
 
 dotenv.config()
 
@@ -53,7 +52,7 @@ const PASSWORD_RECOVERY_FRONTEND_HANDLED =
  * Route to get user information by id
  * @require User JWT token
  */
-usersRouterNew.get(
+usersRouter.get(
     "/:id",
     AuthenticateCorrespondingId,
     async (req: Request, res: Response) => {
@@ -87,7 +86,7 @@ usersRouterNew.get(
     }
 )
 
-usersRouterNew.get(
+usersRouter.get(
     "/recoverpasswordrequest/:email",
     async (req: Request, res: Response) => {
         const email = req?.params?.email
@@ -147,14 +146,14 @@ usersRouterNew.get(
     }
 )
 
-usersRouterNew.get("/recoverpassword/:id", async (req: Request, res: Response) => {
+usersRouter.get("/recoverpassword/:id", async (req: Request, res: Response) => {
     const id = req?.params?.id
     res.render("recoverPassword.ejs", {
         url: `${process.env.APP_URL}/users/recoverpassword/` + id,
     })
 })
 
-usersRouterNew.post(
+usersRouter.post(
     "/recoverpassword/:id",
     bodyJSONValidate(recoverPasswordSchema),
     async (req: Request, res: Response) => {
@@ -244,7 +243,7 @@ usersRouterNew.post(
     }
 )
 
-usersRouterNew.get("/validate/:id", async (req: Request, res: Response) => {
+usersRouter.get("/validate/:id", async (req: Request, res: Response) => {
     const id = req?.params?.id
     try {
         let emailValidator;
@@ -343,7 +342,7 @@ usersRouterNew.get("/validate/:id", async (req: Request, res: Response) => {
 /**
  * Route to create a new user
  */
-usersRouterNew.post(
+usersRouter.post(
     "/",
     bodyJSONValidate(createUserSchema),
     async (req: Request, res: Response) => {
@@ -417,7 +416,7 @@ usersRouterNew.post(
     }
 )
 
-usersRouterNew.post(
+usersRouter.post(
     "/login",
     bodyJSONValidate(loginSchema),
     async (req: Request, res: Response) => {
@@ -467,7 +466,7 @@ usersRouterNew.post(
     }
 )
 
-usersRouterNew.post(
+usersRouter.post(
     "/updatepassword/:id",
     AuthenticateCorrespondingId,
     bodyJSONValidate(userNewPasswordSchema),
@@ -535,7 +534,7 @@ usersRouterNew.post(
 
 // PUT
 
-usersRouterNew.put(
+usersRouter.put(
     "/:id",
     AuthenticateCorrespondingId,
     bodyJSONValidate(generateSchemaMiddleware(UserPublicEdit)),
@@ -565,7 +564,7 @@ usersRouterNew.put(
 )
 
 // DELETE
-usersRouterNew.delete("/:id",AuthenticateCorrespondingId, async (req: Request, res: Response) => {
+usersRouter.delete("/:id",AuthenticateCorrespondingId, async (req: Request, res: Response) => {
     const id = req?.params?.id
 
     try {
@@ -587,7 +586,7 @@ usersRouterNew.delete("/:id",AuthenticateCorrespondingId, async (req: Request, r
     }
 })
 
-usersRouterNew.get(
+usersRouter.get(
     "/",
     AuthenticateAdmin,
     async (_req: Request, res: Response) => {
