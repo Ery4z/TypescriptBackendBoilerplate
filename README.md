@@ -25,7 +25,7 @@ To run this project, you'll need Node.js and npm installed on your machine.
 
 ### Setup
 
-1. **Clone the Repository**: `git clone https://github.com/your-repo/TypescriptBackendBoilerplate.git`
+1. **Clone the Repository**: `git clone https://github.com/Ery4z/TypescriptBackendBoilerplate.git`
 2. **Navigate to Project Directory**: `cd TypescriptBackendBoilerplate`
 3. **Install Dependencies**: `npm install`
 
