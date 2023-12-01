@@ -117,11 +117,11 @@ usersRouterNew.get(
                 return
             }
 
-            const passwordRecovery = passwordRecoveryFactory(user._id)
+            const passwordRecovery = passwordRecoveryFactory(user._id!)
             
 
             try{
-                databaseServiceUser.insertPasswordRecovery(passwordRecovery)
+                passwordRecovery._id = await databaseServiceUser.insertPasswordRecovery(passwordRecovery)
             } catch (error) {
                 res.status(500).send(
                     `Error accessing to the password recovery database`
@@ -139,6 +139,7 @@ usersRouterNew.get(
             )
 
         } catch (error) {
+            console.error(error)
             res.status(500).send(
                 "An error occured while trying to recover the password"
             )
@@ -228,7 +229,7 @@ usersRouterNew.post(
         }
 
         try{
-            isUpdated = await databaseServiceUser.updatePasswordRecovery(passwordRecovery._id,passwordRecoveryEdit)
+            isUpdated = await databaseServiceUser.updatePasswordRecovery(passwordRecovery._id!,passwordRecoveryEdit)
         } catch (error) {
             res.status(500).send(
                 `Error accessing to the password recovery database`
@@ -298,7 +299,7 @@ usersRouterNew.get("/validate/:id", async (req: Request, res: Response) => {
         let uniqueUserModified: Boolean;
 
         try {
-            uniqueUserModified = await databaseServiceUser.updateUser(user._id,userEdit)
+            uniqueUserModified = await databaseServiceUser.updateUser(user._id!,userEdit)
         } catch {
             res.status(500).send(
                 "Error activating the user"
@@ -310,7 +311,7 @@ usersRouterNew.get("/validate/:id", async (req: Request, res: Response) => {
 
         if (!uniqueUserModified) {
             res.status(500).send(
-                "Error activating the user, either user doesot exist or is replicated in the database"
+                "Error activating the user, either user does not exist or is replicated in the database"
             )
             return
         }
@@ -369,7 +370,7 @@ usersRouterNew.post(
             newUser = createDefaultAccount(newUser) 
 
             try {
-                await databaseServiceUser.insertUser(newUser)
+                newUser._id = await databaseServiceUser.insertUser(newUser)
             } catch (error) {
                 console.error(error)
                 res.status(500).send((error as Error).message)
@@ -429,6 +430,16 @@ usersRouterNew.post(
                 if (!user){
                     res.status(401).send("Unauthorized")
                         return
+                }
+
+                // Verify that the email is validated
+                if (user.status == "created"){
+                    res.status(403).send("Please validate your email address to be able to login.")
+                    return
+                }
+                if (user.status == "deleted"){
+                    res.status(401).send("Unauthorized")
+                    return
                 }
     
                 var comparisonResult: Boolean = await compareHash(

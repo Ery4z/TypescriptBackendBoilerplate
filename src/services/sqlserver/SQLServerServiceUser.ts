@@ -26,15 +26,21 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
         this.emailVerificationTableConfig = EmailValidatorSQLServerMapping
 
 
+        this.emailVerificationTableConfig.setForeignKey("userId",UserSQLServerMapping.schema,UserSQLServerMapping.tableName,UserSQLServerMapping.primaryKey)
+        this.passwordRecoveryTableConfig.setForeignKey("userId",UserSQLServerMapping.schema,UserSQLServerMapping.tableName,UserSQLServerMapping.primaryKey)
         
-        ensureTableExists(this.pool, UserSQLServerMapping)
         
-        this.emailVerificationTableConfig.setForeignKey("userId",UserSQLServerMapping.tableName,UserSQLServerMapping.primaryKey)
-        ensureTableExists(this.pool,this.emailVerificationTableConfig)
+        
 
-        this.passwordRecoveryTableConfig.setForeignKey("userId",UserSQLServerMapping.tableName,UserSQLServerMapping.primaryKey)
-        ensureTableExists(this.pool,this.passwordRecoveryTableConfig)
     
+    }
+    async initDatabase(): Promise<Boolean>{
+        await ensureTableExists(this.pool, this.userTableConfig)
+            
+        await ensureTableExists(this.pool,this.emailVerificationTableConfig)
+        await ensureTableExists(this.pool,this.passwordRecoveryTableConfig)
+    
+        return true
     }
 
     async _queryDatabaseUser(query: string): Promise<(UserInternalSQLServer | null)[]> {
@@ -89,9 +95,17 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
     
         // Dynamically construct the fields and values for the SQL query
         const fields = Object.keys(userForSql).filter(key => key !== this.userTableConfig.primaryKey).join(', ');
-        const values = Object.keys(userForSql).filter(key => key !== this.userTableConfig.primaryKey).map(key => `@${key}`).join(', ');
+        const values = Object.entries(userForSql).filter(([key,value]) => key !== this.userTableConfig.primaryKey).map(([key,value]) => {
+            if (typeof value === 'string') {
+                return `'${value.replace(/'/g, "''")}'`; // Escape single quotes for strings
+            } else if (value instanceof Date) {
+                return `'${value.toISOString()}'`; // Convert dates to ISO string
+            } else if (typeof value === 'boolean') {
+                return value ? '1' : '0'; // Convert boolean to 1 or 0
+            }
+            return value; // Numbers and other types
+        }).join(', ');
     
-        // Construct the SQL INSERT query
         const query = `
             INSERT INTO ${this.userTableConfig.tableName} (${fields})
             VALUES (${values});
@@ -99,19 +113,7 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
         `;
     
         try {
-            // Execute the query
-            const request = new sql.Request();
-    
-            // Add parameters to the request based on userForSql
-            Object.keys(userForSql).forEach(key => {
-                if (key !== '_id' && isKeyOfUserInternalSQLServer(key)) { // Skip the _id field for insertion
-                    request.input(key, sql.VarChar, userForSql[key]);
-                }
-            });
-    
-            const result = await request.query(query);
-    
-            // Assuming the ID column is an auto-increment integer
+            const result = await this.pool.request().query(query);
             return result.recordset[0].id.toString();
         } catch (err) {
             console.error('Error running insert query:', err);
@@ -148,14 +150,26 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
     }
 
     async insertPasswordRecovery(passwordRecovery: PasswordRecovery): Promise<string> {
-        // Convert the User object to a UserInternalSQLServer instance
         const passwordRecoveryForSql: PasswordRecoverySQLServer = dumpPasswordRecoveryToSQLServer(passwordRecovery);
     
-        // Dynamically construct the fields and values for the SQL query
-        const fields = Object.keys(passwordRecoveryForSql).filter(key => key !== this.passwordRecoveryTableConfig.primaryKey).join(', ');
-        const values = Object.keys(passwordRecoveryForSql).filter(key => key !== this.passwordRecoveryTableConfig.primaryKey).map(key => `@${key}`).join(', ');
+        const fields = Object.keys(passwordRecoveryForSql)
+            .filter(key => key !== this.passwordRecoveryTableConfig.primaryKey)
+            .join(', ');
     
-        // Construct the SQL INSERT query
+        const values = Object.entries(passwordRecoveryForSql)
+            .filter(([key, _]) => key !== this.passwordRecoveryTableConfig.primaryKey)
+            .map(([key, value]) => {
+                if (typeof value === 'string') {
+                    return `'${value.replace(/'/g, "''")}'`; // Escape single quotes for strings
+                } else if (value instanceof Date) {
+                    return `'${value.toISOString()}'`; // Convert dates to ISO string
+                } else if (typeof value === 'boolean') {
+                    return value ? '1' : '0'; // Convert boolean to 1 or 0
+                }
+                return value; // Numbers and other types
+            })
+            .join(', ');
+    
         const query = `
             INSERT INTO ${this.passwordRecoveryTableConfig.tableName} (${fields})
             VALUES (${values});
@@ -163,19 +177,7 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
         `;
     
         try {
-            // Execute the query
-            const request = new sql.Request();
-    
-            // Add parameters to the request based on passwordRecoveryForSql
-            Object.keys(passwordRecoveryForSql).forEach(key => {
-                if (key !== '_id' && isKeyOfPasswordRecoverySQLServer(key)) { // Skip the _id field for insertion
-                    request.input(key, sql.VarChar, passwordRecoveryForSql[key]);
-                }
-            });
-    
-            const result = await request.query(query);
-    
-            // Assuming the ID column is an auto-increment integer
+            const result = await this.pool.request().query(query);
             return result.recordset[0].id.toString();
         } catch (err) {
             console.error('Error running insert query:', err);
@@ -200,15 +202,26 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
     }
 
     async insertEmailValidator(emailValidator: EmailValidator): Promise<string> {
-        
-        // Convert the User object to a UserInternalSQLServer instance
         const emailValidatorForSql: EmailValidatorSQLServer = dumpEmailValidatorToSQLServer(emailValidator);
     
-        // Dynamically construct the fields and values for the SQL query
-        const fields = Object.keys(emailValidatorForSql).filter(key => key !== this.emailVerificationTableConfig.primaryKey).join(', ');
-        const values = Object.keys(emailValidatorForSql).filter(key => key !== this.emailVerificationTableConfig.primaryKey).map(key => `@${key}`).join(', ');
+        const fields = Object.keys(emailValidatorForSql)
+            .filter(key => key !== this.emailVerificationTableConfig.primaryKey)
+            .join(', ');
     
-        // Construct the SQL INSERT query
+        const values = Object.entries(emailValidatorForSql)
+            .filter(([key, _]) => key !== this.emailVerificationTableConfig.primaryKey)
+            .map(([key, value]) => {
+                if (typeof value === 'string') {
+                    return `'${value.replace(/'/g, "''")}'`; // Escape single quotes for strings
+                } else if (value instanceof Date) {
+                    return `'${value.toISOString()}'`; // Convert dates to ISO string
+                } else if (typeof value === 'boolean') {
+                    return value ? '1' : '0'; // Convert boolean to 1 or 0
+                }
+                return value; // Numbers and other types
+            })
+            .join(', ');
+    
         const query = `
             INSERT INTO ${this.emailVerificationTableConfig.tableName} (${fields})
             VALUES (${values});
@@ -216,25 +229,14 @@ class SQLServerServiceUser implements IDatabaseServiceUser {
         `;
     
         try {
-            // Execute the query
-            const request = new sql.Request();
-    
-            // Add parameters to the request based on passwordRecoveryForSql
-            Object.keys(emailValidatorForSql).forEach(key => {
-                if (key !== this.emailVerificationTableConfig.primaryKey && isKeyOfEmailValidatorSQLServer(key)) { // Skip the _id field for insertion
-                    request.input(key, sql.VarChar, emailValidatorForSql[key]);
-                }
-            });
-    
-            const result = await request.query(query);
-    
-            // Assuming the ID column is an auto-increment integer
+            const result = await this.pool.request().query(query);
             return result.recordset[0].id.toString();
         } catch (err) {
             console.error('Error running insert query:', err);
             throw err;
         }
     }
+    
 
     async getEmailValidatorById(id: string): Promise<EmailValidator | null> {
         const result = await this.queryDatabaseEmailValidator(`SELECT * FROM ${this.emailVerificationTableConfig.tableName} WHERE ${this.emailVerificationTableConfig.primaryKey} = '${id}'`);

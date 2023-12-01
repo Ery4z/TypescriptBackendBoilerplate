@@ -6,17 +6,18 @@ import { TableMapping } from "../tools/sqlToolbox";
 
 export const PasswordRecoverySQLServerMapping: TableMapping = {
     tableName: 'PasswordRecoveries',
+    schema: 'dbo',
     columns: {
         expirationDate: 'DATETIME',
-        userId: 'NVARCHAR(100)', // Adjust according to your UserId data type
+        userId: 'INT', // Adjust according to your UserId data type
         isUsed: 'BIT',
-        _id: 'BIGINT' // If using auto-increment in SQL Server
+        _id: 'INT IDENTITY(1,1)' // If using auto-increment in SQL Server
     },
     primaryKey: '_id',
     foreignKeys: {},
-    setForeignKey: function (columnName:string, tableReference:string, columnReference:string) {
+    setForeignKey: function (columnName:string, schemaReference:string, tableReference:string, columnReference:string) {
         this.foreignKeys = this.foreignKeys ?? {};
-        this.foreignKeys[columnName] = `${tableReference}(${columnReference})`;
+        this.foreignKeys[columnName] = `${schemaReference}.${tableReference}(${columnReference})`;
     },
     constraints: []
 };
@@ -46,7 +47,7 @@ export function isKeyOfPasswordRecoverySQLServer(key: string): key is keyof Pass
 // Function to load PasswordRecovery from SQL Server format
 export function loadPasswordRecoveryFromSQLServer(recoverySQLServer: PasswordRecoverySQLServer | null): PasswordRecovery | null {
     const conversionRules = {
-        _id: convertObjectIdToString // Convert SQL Server BigInt ID to string
+        _id: String // Convert SQL Server BigInt ID to string
     };
 
     return recoverySQLServer ? genericConversion(recoverySQLServer, conversionRules) : null;
@@ -55,7 +56,7 @@ export function loadPasswordRecoveryFromSQLServer(recoverySQLServer: PasswordRec
 // Function to dump PasswordRecovery to SQL Server format
 export function dumpPasswordRecoveryToSQLServer(recovery: Partial<PasswordRecovery>): PasswordRecoverySQLServer {
     const conversionRules = {
-        _id: convertToObjectId // Convert string ID to SQL Server BigInt
+        _id: parseInt // Convert string ID to SQL Server BigInt
     };
 
     return genericConversion(recovery, conversionRules);

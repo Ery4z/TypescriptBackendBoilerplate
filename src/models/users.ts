@@ -22,14 +22,13 @@ export class User {
         public city: string,
         public phone: string,
         public isAdmin: boolean,
-        public _id: string
+        public _id?: string
     ) {}
 }
 
 export function createDefaultAccount(user: User ){
     return {
                 ...user,
-                _id: String(new ObjectId()),
                 status: "created",
                 avatarURL: "",
                 planId: "",

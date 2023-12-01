@@ -1,7 +1,7 @@
 import IDatabaseServiceUser from "../interfaces/IDatabaseServiceUser";
 import MongoDBServiceUser from "../services/mongodb/mongoDBServiceUser";
 import * as mongoDB from "mongodb"
-import sql, { config, pool } from 'mssql';
+import sql, { config } from 'mssql';
 import { UserInternalMongo } from "../models/users.mongo";
 import { PasswordRecoveryInternalMongo } from "../models/passwordRecovery.mongo";
 import { EmailValidatorInternalMongo } from "../models/emailValidators.mongo";
@@ -48,16 +48,26 @@ export async function createDatabaseServiceUser(config: any): Promise<IDatabaseS
             }
         };
         console.log(sqlConfig)
+        let pool;
         try {
-            const pool = new sql.ConnectionPool(sqlConfig);
+            pool = new sql.ConnectionPool(sqlConfig);
             await pool.connect()
             console.log('Connected to SQL Server successfully.');
 
         } catch (err) {
             console.error('Failed to connect to SQL Server:', err);
+            throw new Error("Failed to connect to SQL Server");
         }
 
-        return new SQLServerServiceUser(pool)
+        try{
+            const service = new SQLServerServiceUser(pool)
+            await service.initDatabase()
+            return service
+        } catch (err){
+            console.error('Failed to initialize user service:', err);
+            throw new Error("Failed to initialize user service");
+        }
+
 
     }
     throw new Error("Unsupported database type");

@@ -3,7 +3,7 @@ content-type: application/json
 
 {
     "email": "lateamlad+32@gmail.com", 
-    "password": "Password12"
+    "password": "Passw0rd"
 }
 
 ###
@@ -32,9 +32,9 @@ GET http://localhost:3000/users/recoverpasswordrequest/lateamlad%2B32%40gmail.co
 
 GET http://localhost:3000/users/
 content-type: application/json
-Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTY3MWI5NWZmZmM2NGM3YWY3YzkyOTUiLCJuYW1lIjoiam9obl9kb2UiLCJhZG0iOnRydWUsImlhdCI6MTcwMTI1NzkyMiwiZXhwIjoxNzMyNzkzOTIyfQ.Qv6y7Qqmcckg7kjOnLfDsj-99hjcIN-LabqvD-A3Qe4"
+Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiam9obl9kb2UiLCJhZG0iOmZhbHNlLCJpYXQiOjE3MDE0MjYxOTMsImV4cCI6MTczMjk2MjE5M30.IbbDo6YJRwVA_Z6FBPseBOxdXyWO6GvYqubQK55Z15A"
 
 ###
-GET http://localhost:3000/users/65671b95fffc64c7af7c9295
+GET http://localhost:3000/users/1
 content-type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2NTY3MWI5NWZmZmM2NGM3YWY3YzkyOTUiLCJuYW1lIjoiam9obl9kb2UiLCJhZG0iOnRydWUsImlhdCI6MTcwMTI1NzkyMiwiZXhwIjoxNzMyNzkzOTIyfQ.Qv6y7Qqmcckg7kjOnLfDsj-99hjcIN-LabqvD-A3Qe4
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiIxIiwibmFtZSI6ImpvaG5fZG9lIiwiYWRtIjpmYWxzZSwiaWF0IjoxNzAxNDI2NTI3LCJleHAiOjE3MzI5NjI1Mjd9.e0u6BDpMPwuICPJ07A_HyNwMvZzqXeFyyBeuO1Jafe8

@@ -7,18 +7,19 @@ import { TableMapping } from "../tools/sqlToolbox";
 // SQL Server data type mappings for EmailValidator
 export const EmailValidatorSQLServerMapping: TableMapping = {
     tableName: 'EmailValidators',
+    schema: 'dbo',
     columns: {
         email: 'NVARCHAR(255)',
         expirationDate: 'DATETIME',
-        userId: 'BIGINT',
+        userId: 'INT',
         isUsed: 'BIT',
-        _id: 'BIGINT'
+        _id: 'INT IDENTITY(1,1)'
     },
     primaryKey: '_id',
     foreignKeys: {},
-    setForeignKey: function (columnName:string, tableReference:string, columnReference:string) {
+    setForeignKey: function (columnName:string, schemaReference:string, tableReference:string, columnReference:string) {
         this.foreignKeys = this.foreignKeys ?? {};
-        this.foreignKeys[columnName] = `${tableReference}(${columnReference})`;
+        this.foreignKeys[columnName] = `${schemaReference}.${tableReference}(${columnReference})`;
     },
     constraints: []
 };
@@ -50,7 +51,7 @@ export function isKeyOfEmailValidatorSQLServer(key: string): key is keyof EmailV
 // Function to load EmailValidator from SQL Server format
 export function loadEmailValidatorFromSQLServer(validatorSQLServer: EmailValidatorSQLServer | null): EmailValidator | null {
     const conversionRules = {
-        _id: convertObjectIdToString // Convert SQL Server BigInt ID to string
+        _id: String // Convert SQL Server BigInt ID to string
     };
 
     return validatorSQLServer ? genericConversion(validatorSQLServer, conversionRules) : null;
@@ -59,7 +60,7 @@ export function loadEmailValidatorFromSQLServer(validatorSQLServer: EmailValidat
 // Function to dump EmailValidator to SQL Server format
 export function dumpEmailValidatorToSQLServer(validator: Partial<EmailValidator>): EmailValidatorSQLServer {
     const conversionRules = {
-        _id: convertToObjectId // Convert string ID to SQL Server BigInt
+        _id: parseInt // Convert string ID to SQL Server BigInt
     };
 
     return genericConversion(validator, conversionRules);

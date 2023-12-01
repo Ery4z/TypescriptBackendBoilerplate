@@ -23,6 +23,7 @@ export function generateToken(user: User): string {
     ) {
         throw new Error("JWT_DURATION is not defined")
     }
+    console.log(user)
     const token = jwt.sign(
         { _id: user._id?.toString(), name: user.userName, adm: user.isAdmin },
         process.env.JWT_SECRET_KEY,

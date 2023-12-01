@@ -8,6 +8,7 @@ import { TableMapping } from "../tools/sqlToolbox";
 
 export const UserSQLServerMapping: TableMapping = {
     tableName: 'Users',
+    schema: 'dbo',
     columns: {
         email: 'NVARCHAR(100)',
         userName: 'NVARCHAR(50)',
@@ -26,13 +27,13 @@ export const UserSQLServerMapping: TableMapping = {
         city: 'NVARCHAR(100)',
         phone: 'NVARCHAR(20)',
         isAdmin: 'BIT',
-        _id: 'BIGINT'
+        _id: 'INT IDENTITY(1,1)'
     },
     primaryKey: '_id',
     foreignKeys: {},
-    setForeignKey: function (columnName:string, tableReference:string, columnReference:string) {
+    setForeignKey: function (columnName:string, schemaReference:string, tableReference:string, columnReference:string) {
         this.foreignKeys = this.foreignKeys ?? {};
-        this.foreignKeys[columnName] = `${tableReference}(${columnReference})`;
+        this.foreignKeys[columnName] = `${schemaReference}.${tableReference}(${columnReference})`;
     },
     constraints: [
         // Additional constraints can be added here if needed
@@ -80,7 +81,7 @@ export function isKeyOfUserInternalSQLServer(key: string): key is keyof UserInte
 
 export function loadUserFromSQLServer(userSQLServer: UserInternalSQLServer | null): User | null {
     const conversionRules = {
-        _id: convertObjectIdToString
+        _id: String
     };
 
     return userSQLServer ? genericConversion(userSQLServer, conversionRules): null;
@@ -88,7 +89,7 @@ export function loadUserFromSQLServer(userSQLServer: UserInternalSQLServer | nul
 
 export function dumpUserToSQLServer(user: Partial<User>): UserInternalSQLServer {
     const conversionRules = {
-        _id: convertToObjectId
+        _id: parseInt
     };
 
     return genericConversion(user, conversionRules);

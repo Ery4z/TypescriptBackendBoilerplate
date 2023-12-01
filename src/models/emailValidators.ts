@@ -11,7 +11,7 @@ export class EmailValidator {
         public expirationDate: Date,
         public userId: string,
         public isUsed: boolean,
-        public _id: string
+        public _id?: string
     ) {}
 }
 
@@ -22,7 +22,6 @@ export function emailValidatorFactory(email: string, userId: string) {
             Date.now() + parseFloat(validationExpiration) * 60 * 60 * 1000
         ),
         userId,
-        false,
-        String(new ObjectId())
+        false
     )
 }

@@ -7,7 +7,7 @@ export async function ensureTableExists(pool: sql.ConnectionPool, tableMapping: 
     const tableName = tableMapping.tableName;
 
     // Check if the table exists
-    const checkQuery = `IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'${tableName}') SELECT 1 AS doesNotExist`;
+    const checkQuery = `IF EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA=N'${tableMapping.schema}' AND TABLE_NAME = N'${tableMapping.tableName}') SELECT 0 AS doesNotExist ELSE SELECT 1 AS doesNotExist`;
 
     try {
         const result = await pool.request().query(checkQuery);
@@ -16,9 +16,9 @@ export async function ensureTableExists(pool: sql.ConnectionPool, tableMapping: 
             // Table does not exist, so create it
             const createTableQuery = generateCreateTableQuery(tableMapping);
             await pool.request().query(createTableQuery);
-            console.log(`Table '${tableName}' created successfully.`);
+            console.log(`Table '${tableMapping.schema}.${tableName}' created successfully.`);
         } else {
-            console.log(`Table '${tableName}' already exists.`);
+            console.log(`Found Table '${tableMapping.schema}.${tableName}'.`);
         }
     } catch (err) {
         console.error('Error in ensureTableExists:', err);
@@ -39,14 +39,15 @@ export function generateCreateTableQuery(mapping: TableMapping): string {
 
     const constraints = mapping.constraints?.join(',\n    ') || '';
 
-    return `CREATE TABLE ${mapping.tableName} (\n    ${fields}${primaryKey}${foreignKeys}${constraints ? ',\n    ' + constraints : ''}\n);`;
+    return `CREATE TABLE ${mapping.schema}.${mapping.tableName} (\n    ${fields}${primaryKey}${foreignKeys}${constraints ? ',\n    ' + constraints : ''}\n);`;
 }
 
 export interface TableMapping {
     tableName: string;
+    schema: string;
     columns: { [columnName: string]: string };
     primaryKey: string;
     foreignKeys: { [columnName: string]: string };
-    setForeignKey: (columnName:string, tableReference:string, columnReference:string) => void;
+    setForeignKey: (columnName:string, schemaReference:string, tableReference:string, columnReference:string) => void;
     constraints: string[];
 }
